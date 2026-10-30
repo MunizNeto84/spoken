@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Spoken.Application/Spoken.Application.csproj" />
+    <Project Path="src/Spoken.Domain/Spoken.Domain.csproj" />
+    <Project Path="src/Spoken.Infrastructure/Spoken.Infrastructure.csproj" />
+    <Project Path="src/Spoken.Web/Spoken.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Spoken.UnitTests/Spoken.UnitTests.csproj" />
+  </Folder>
+</Solution>
