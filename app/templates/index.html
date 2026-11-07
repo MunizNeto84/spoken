@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spoken — Prática de Conversação com IA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-mood="calm">
+    <div class="app-shell">
+        <!-- Cabeçalho e Seletores -->
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-dot"></span>
+                <h1>Spoken</h1>
+            </div>
+
+            <div class="controls-group">
+                <!-- Seletor de Idioma -->
+                <div class="pill-selector" id="lang-selector">
+                    <button type="button" class="pill active" data-lang="en">🇺🇸 Inglês</button>
+                    <button type="button" class="pill" data-lang="es">🇪🇸 Espanhol</button>
+                </div>
+
+                <!-- Seletor de Humor -->
+                <div class="pill-selector" id="mood-selector">
+                    <button type="button" class="pill active" data-mood="calm">🌱 Tranquilo</button>
+                    <button type="button" class="pill" data-mood="spicy">🔥 Ácido</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Área do Orbe + Chat -->
+        <main class="workspace">
+            <section class="orb-stage">
+                <div class="orb-wrapper" id="orb-wrapper" data-state="idle">
+                    <div class="orb-ring"></div>
+                    <div class="orb-core"></div>
+                </div>
+                <p class="status-label" id="status-label">Clique em "Iniciar Sessão" ou no microfone para começar</p>
+                <button type="button" class="start-btn" id="start-btn">▶️ Iniciar Sessão</button>
+            </section>
+
+            <section class="chat-feed" id="chat-feed">
+                <!-- Mensagens inseridas dinamicamente via JS -->
+            </section>
+        </main>
+
+        <!-- Barra Inferior de Voz e Texto -->
+        <footer class="input-dock">
+            <button type="button" class="mic-btn" id="mic-btn" title="Clique para falar">
+                <span class="mic-icon">🎙️</span>
+                <span class="mic-text" id="mic-text">Falar</span>
+            </button>
+
+            <form class="text-form" id="chat-form">
+                <input 
+                    type="text" 
+                    id="text-input" 
+                    placeholder="Ou digite sua frase aqui (você pode misturar português se travar)..." 
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-btn" id="send-btn">Enviar</button>
+            </form>
+        </footer>
+    </div>
+
+    <audio id="audio-player" hidden></audio>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
