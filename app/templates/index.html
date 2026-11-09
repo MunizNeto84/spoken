@@ -1,71 +1,168 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0f17" />
     <title>Spoken — Prática de Conversação com IA</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body data-mood="calm">
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+
+    <!-- Import Map: dependências do Three.js e do carregador VRM. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+          "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.5/lib/three-vrm.module.min.js"
+        }
+      }
+    </script>
+  </head>
+
+  <body data-mood="calm">
     <div class="app-shell">
-        <!-- Cabeçalho e Seletores -->
-        <header class="topbar">
-            <div class="brand">
-                <span class="brand-dot"></span>
-                <h1>Spoken</h1>
-            </div>
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <h1>Spoken</h1>
+        </div>
 
-            <div class="controls-group">
-                <!-- Seletor de Idioma -->
-                <div class="pill-selector" id="lang-selector">
-                    <button type="button" class="pill active" data-lang="en">🇺🇸 Inglês</button>
-                    <button type="button" class="pill" data-lang="es">🇪🇸 Espanhol</button>
-                </div>
-
-                <!-- Seletor de Humor -->
-                <div class="pill-selector" id="mood-selector">
-                    <button type="button" class="pill active" data-mood="calm">🌱 Tranquilo</button>
-                    <button type="button" class="pill" data-mood="spicy">🔥 Ácido</button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Área do Orbe + Chat -->
-        <main class="workspace">
-            <section class="orb-stage">
-                <div class="orb-wrapper" id="orb-wrapper" data-state="idle">
-                    <div class="orb-ring"></div>
-                    <div class="orb-core"></div>
-                </div>
-                <p class="status-label" id="status-label">Clique em "Iniciar Sessão" ou no microfone para começar</p>
-                <button type="button" class="start-btn" id="start-btn">▶️ Iniciar Sessão</button>
-            </section>
-
-            <section class="chat-feed" id="chat-feed">
-                <!-- Mensagens inseridas dinamicamente via JS -->
-            </section>
-        </main>
-
-        <!-- Barra Inferior de Voz e Texto -->
-        <footer class="input-dock">
-            <button type="button" class="mic-btn" id="mic-btn" title="Clique para falar">
-                <span class="mic-icon">🎙️</span>
-                <span class="mic-text" id="mic-text">Falar</span>
+        <div class="controls-group">
+          <div
+            class="pill-selector"
+            id="lang-selector"
+            aria-label="Idioma de aprendizagem"
+          >
+            <button
+              type="button"
+              class="pill active"
+              data-lang="en"
+              aria-pressed="true"
+            >
+              🇺🇸 Inglês
             </button>
+            <button
+              type="button"
+              class="pill"
+              data-lang="es"
+              aria-pressed="false"
+            >
+              🇪🇸 Espanhol
+            </button>
+          </div>
 
-            <form class="text-form" id="chat-form">
-                <input 
-                    type="text" 
-                    id="text-input" 
-                    placeholder="Ou digite sua frase aqui (você pode misturar português se travar)..." 
-                    autocomplete="off"
-                >
-                <button type="submit" class="send-btn" id="send-btn">Enviar</button>
-            </form>
-        </footer>
+          <div
+            class="pill-selector"
+            id="mood-selector"
+            aria-label="Personalidade da professora"
+          >
+            <button
+              type="button"
+              class="pill active"
+              data-mood="calm"
+              aria-pressed="true"
+            >
+              🌱 Tranquilo
+            </button>
+            <button
+              type="button"
+              class="pill"
+              data-mood="spicy"
+              aria-pressed="false"
+            >
+              🔥 Ácido
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="orb-stage" aria-label="Professora virtual">
+          <div
+            id="avatar-container"
+            class="character-viewport"
+            data-model-url="{{ url_for('static', filename='models/teacher.vrm') }}"
+          >
+            <div id="avatar-loading" class="avatar-loading">
+              <span class="loading-spinner" aria-hidden="true"></span>
+              <span>Preparando sua professora...</span>
+            </div>
+
+            <p
+              id="avatar-status"
+              class="avatar-status"
+              role="status"
+              aria-live="polite"
+            >
+              Carregando personagem 3D...
+            </p>
+          </div>
+
+          <!-- Mantido temporariamente para compatibilidade com app.js/LivePortrait.
+               O novo avatar 3D é renderizado no #avatar-container. -->
+          <video
+            id="avatar-video"
+            class="legacy-avatar-video"
+            playsinline
+            autoplay
+            hidden
+          ></video>
+
+          <p class="status-label" id="status-label">
+            Sua professora está pronta para conversar.
+          </p>
+
+          <button type="button" class="start-btn" id="start-btn">
+            ▶️ Iniciar Sessão
+          </button>
+        </section>
+
+        <section
+          class="chat-feed"
+          id="chat-feed"
+          aria-label="Histórico da conversa"
+          aria-live="polite"
+        >
+          <!-- Mensagens inseridas dinamicamente por app.js -->
+        </section>
+      </main>
+
+      <footer class="input-dock">
+        <button
+          type="button"
+          class="mic-btn"
+          id="mic-btn"
+          title="Clique para falar"
+          aria-label="Falar com a professora"
+        >
+          <span class="mic-icon" aria-hidden="true">🎙️</span>
+          <span class="mic-text" id="mic-text">Falar</span>
+        </button>
+
+        <form class="text-form" id="chat-form">
+          <input
+            type="text"
+            id="text-input"
+            placeholder="Ou digite sua frase aqui..."
+            autocomplete="off"
+            aria-label="Digite sua mensagem"
+          />
+          <button type="submit" class="send-btn" id="send-btn">Enviar</button>
+        </form>
+      </footer>
     </div>
 
-    <audio id="audio-player" hidden></audio>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-</body>
+    <!-- JavaScript atual da aplicação: chat, microfone, seletores e API. -->
+    <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+    <!-- Novo motor 3D: carrega o VRM automaticamente ao abrir a página. -->
+    <script
+      type="module"
+      src="{{ url_for('static', filename='js/avatar/main.js') }}"
+    ></script>
+  </body>
 </html>

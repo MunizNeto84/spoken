@@ -22,3 +22,12 @@ temp_audio/
 .vscode/
 .idea/
 .DS_Store
+
+backups/
+temp_audio/
+temp_video/
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+
