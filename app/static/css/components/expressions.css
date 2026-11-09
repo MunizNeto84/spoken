@@ -1,0 +1,51 @@
+/* Expressões base: as classes de estado são controladas por ExpressionController. */
+body[data-mood=calm] .character{--eye-scale:.94}
+body[data-mood=spicy] .character{--eye-scale:.78;animation-duration:3.8s}
+body[data-mood=spicy] .eyebrow-left{transform:rotate(-13deg) translateY(3px)}
+body[data-mood=spicy] .eyebrow-right{transform:rotate(13deg) translateY(3px)}
+body[data-mood=spicy] .mouth{border-radius:3px 3px 50% 50%;border-bottom-width:3px}
+body[data-mood=spicy] .blush{background:#e66f7955}
+
+/* Calm: expressão receptiva. */
+body[data-expression=neutral] .mouth{height:4px}
+body[data-expression=happy] .mouth{width:25px;left:61px;height:8px;border-radius:0 0 60% 60%}
+body[data-expression=happy] .eyebrow-left{transform:rotate(5deg)}
+body[data-expression=happy] .eyebrow-right{transform:rotate(-5deg)}
+
+/* Atenção/correção sem bronca. */
+body[data-expression=concerned] .eyebrow-left{transform:rotate(12deg) translateY(-2px)}
+body[data-expression=concerned] .eyebrow-right{transform:rotate(-12deg) translateY(-2px)}
+
+/* Spicy: bronca visível, rosto ruborizado e olhar bravo. */
+body[data-expression=scolding] .face{
+  background:linear-gradient(110deg,#f0b9b1,#ffc9bd 45%,#eaa49f);
+  box-shadow:inset 0 0 24px #ed514c55,0 0 18px #f05c5740;
+  filter:saturate(1.28);
+}
+body[data-expression=scolding] .blush{
+  top:116px;width:31px;height:14px;background:#ed4e5fbd;filter:blur(5px);
+}
+body[data-expression=scolding] .eyebrow-left{transform:rotate(-24deg) translateY(5px)}
+body[data-expression=scolding] .eyebrow-right{transform:rotate(24deg) translateY(5px)}
+body[data-expression=scolding] .eye{transform:scaleY(.58)}
+body[data-expression=scolding] .mouth{
+  width:23px;left:62px;height:7px;border-radius:2px 2px 45% 45%;
+  border-bottom:3px solid #8e3444;
+}
+body[data-expression=scolding] .hair-cap,
+body[data-expression=scolding] .hair-fringe{filter:saturate(1.15) brightness(.94)}
+body[data-expression=scolding] .teacher-heading .live-dot{background:#ff665f;box-shadow:0 0 14px #ff665f}
+
+/* Irritada, mas sem rubor tão forte. */
+body[data-expression=angry] .eyebrow-left{transform:rotate(-20deg) translateY(4px)}
+body[data-expression=angry] .eyebrow-right{transform:rotate(20deg) translateY(4px)}
+body[data-expression=angry] .eye{transform:scaleY(.68)}
+
+/* Boca animada pelo nível de áudio. */
+body.is-speaking .mouth{height:calc(4px + var(--mouth-open)*20px);border-radius:2px 2px 45% 45%}
+body[data-mood=spicy].is-speaking .mouth{transition:height .025s linear}
+body.is-blinking .eye{transform:scaleY(.08)!important;transition:transform .09s}
+
+/* Indicador de bronca e pequena vibração de ênfase. */
+body[data-expression=scolding] .character{animation:scolding-emphasis .42s ease-in-out 2}
+@keyframes scolding-emphasis{0%,100%{translate:0 0}25%{translate:-2px 0}75%{translate:2px 0}}

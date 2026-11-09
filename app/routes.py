@@ -1,174 +1,158 @@
-
 import asyncio
 import logging
-import os
+from pathlib import Path
 
-from flask import (
-    Blueprint,
-    jsonify,
-    render_template,
-    request,
-    send_from_directory,
-)
+from flask import Blueprint, jsonify, render_template, request, send_from_directory
 
 from app.services.ai_service import ResilientTutorService
 from app.services.conversation_service import ConversationService
 from app.services.tts_service import generate_segmented_speech
 
-
 logger = logging.getLogger(__name__)
-
 bp = Blueprint("main", __name__)
 
-# Dependências da aplicação
 tutor_service = ResilientTutorService()
 conversation_service = ConversationService(tutor_service)
 
-
-# Diretórios de mídia
-BASE_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")
-)
-
-TEMP_AUDIO_DIR = os.path.join(BASE_DIR, "temp_audio")
-TEMP_VIDEO_DIR = os.path.join(BASE_DIR, "temp_video")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+AUDIO_DIR = PROJECT_ROOT / "temp_audio"
 
 
-def generate_response_media(segments: list[dict], mood: str):
-    """
-    Gera áudio e, temporariamente, o vídeo do LivePortrait.
+def _validate_options(target_lang: str, mood: str) -> None:
+    if target_lang not in {"en", "es"}:
+        raise ValueError("Idioma não suportado.")
+    if mood not in {"calm", "spicy"}:
+        raise ValueError("Personalidade não suportada.")
 
-    Esta implementação será substituída gradualmente
-    pelo sistema de áudio e avatar 3D.
-    """
 
-    audio_filepath = asyncio.run(
+def _generate_audio(segments: list[dict], mood: str) -> tuple[str, str]:
+    clean_segments = []
+    for segment in segments:
+        if not isinstance(segment, dict):
+            continue
+        text = str(segment.get("text", "")).strip()
+        if not text:
+            continue
+        lang = segment.get("lang", "pt")
+        if lang not in {"pt", "en", "es"}:
+            lang = "pt"
+        clean_segments.append({"lang": lang, "text": text})
+
+    if not clean_segments:
+        raise ValueError("A resposta da professora não possui texto para narrar.")
+
+    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    filepath = asyncio.run(
         generate_segmented_speech(
-            segments=segments,
+            segments=clean_segments,
             mood=mood,
-            output_dir=TEMP_AUDIO_DIR,
+            output_dir=str(AUDIO_DIR),
         )
     )
-
-    video_url = None
-
-    try:
-        video_filepath = asyncio.run(
-            animator.generate_video(audio_filepath, mood)
-        )
-
-        video_url = f"/api/video/{os.path.basename(video_filepath)}"
-
-    except Exception:
-        logger.exception("Erro ao gerar vídeo do personagem.")
-
-    return audio_filepath, video_url
+    filename = Path(filepath).name
+    spoken_text = " ".join(item["text"] for item in clean_segments)
+    return spoken_text, f"/api/audio/{filename}"
 
 
-@bp.route("/")
+@bp.get("/")
 def index():
     return render_template("index.html")
 
 
-@bp.route("/api/start", methods=["POST"])
+@bp.post("/api/start")
 def start_session():
     data = request.get_json(silent=True) or {}
-
     target_lang = data.get("target_lang", "en")
     mood = data.get("mood", "calm")
-
-    segments = [
-        {
-            "lang": "pt",
-            "text": (
-                "Oi! Vamos destravar esse inglês com calma?"
-                if mood == "calm"
-                else "Zero paciência para erros hoje!"
-            ),
-        },
-        {
-            "lang": "en",
-            "text": "Tell me, how is your day going so far?",
-        },
-    ]
 
     try:
-        _, video_url = generate_response_media(segments, mood)
-
-        spoken_text = " ".join(
-            segment["text"] for segment in segments
+        _validate_options(target_lang, mood)
+        intro_pt = (
+            "Oi! Que bom ter você aqui. Vamos praticar sem pressa."
+            if mood == "calm"
+            else "Olá! Espero que esteja preparado. Hoje vamos levar essa prática a sério!"
         )
-
+        intro_target = (
+            "Tell me, how is your day going so far?"
+            if target_lang == "en"
+            else "Cuéntame, ¿cómo va tu día hasta ahora?"
+        )
+        spoken_text, audio_url = _generate_audio(
+            [
+                {"lang": "pt", "text": intro_pt},
+                {"lang": target_lang, "text": intro_target},
+            ],
+            mood,
+        )
         return jsonify({
             "spoken_text": spoken_text,
-            "video_url": video_url,
+            "audio_url": audio_url,
+            "reaction": "welcoming",
+            "provider": "edge-tts",
         })
-
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     except Exception:
         logger.exception("Erro ao iniciar sessão.")
-
-        return jsonify({
-            "error": "Não foi possível iniciar a sessão."
-        }), 500
+        return jsonify({"error": "Não foi possível iniciar a sessão."}), 500
 
 
-@bp.route("/api/chat", methods=["POST"])
+@bp.post("/api/chat")
 def chat_turn():
     data = request.get_json(silent=True) or {}
-
-    user_message = (data.get("message") or "").strip()
+    message = str(data.get("message") or "").strip()
+    history = data.get("history", [])
     target_lang = data.get("target_lang", "en")
     mood = data.get("mood", "calm")
-    history = data.get("history", [])
 
-    if not user_message:
+    if not message:
         return jsonify({"error": "Mensagem vazia."}), 400
-
     if not isinstance(history, list):
         return jsonify({"error": "Histórico inválido."}), 400
 
     try:
-        ai_response = conversation_service.process_message(
-            user_message=user_message,
+        _validate_options(target_lang, mood)
+        result = conversation_service.process_message(
+            user_message=message,
             target_lang=target_lang,
             mood=mood,
             history=history,
         )
+        spoken_text, audio_url = _generate_audio(result.get("audio_segments", []), mood)
+        has_errors = bool(result.get("has_errors", False))
 
-        segments = ai_response.get("audio_segments", [])
-
-        _, video_url = generate_response_media(segments, mood)
-
-        spoken_text = " ".join(
-            segment["text"] for segment in segments
+        # A reação visual é explícita: no modo Spicy, uma correção importante
+        # aciona uma expressão de bronca temporária no frontend.
+        reaction = "scolding" if has_errors and mood == "spicy" else (
+            "correcting" if has_errors else "explaining"
         )
 
         return jsonify({
-            "user_message": user_message,
-            "has_errors": ai_response.get("has_errors", False),
-            "corrected_sentence": ai_response.get("corrected_sentence"),
-            "explanation_pt": ai_response.get("explanation_pt"),
-            "native_tip": ai_response.get("native_tip"),
+            "user_message": message,
             "spoken_text": spoken_text,
-            "video_url": video_url,
-            "provider": ai_response.get("provider"),
+            "audio_url": audio_url,
+            "reaction": reaction,
+            "has_errors": has_errors,
+            "corrected_sentence": result.get("corrected_sentence"),
+            "explanation_pt": result.get("explanation_pt"),
+            "native_tip": result.get("native_tip"),
+            "provider": result.get("provider", "unknown"),
         })
-
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-
     except Exception:
         logger.exception("Erro ao processar conversa.")
-
-        return jsonify({
-            "error": "Não foi possível processar sua mensagem."
-        }), 500
+        return jsonify({"error": "Não foi possível processar sua mensagem."}), 500
 
 
-@bp.route("/api/video/<path:filename>")
-def serve_video(filename: str):
+@bp.get("/api/audio/<path:filename>")
+def serve_audio(filename: str):
+    if Path(filename).name != filename:
+        return jsonify({"error": "Nome de arquivo inválido."}), 400
     return send_from_directory(
-        TEMP_VIDEO_DIR,
+        str(AUDIO_DIR),
         filename,
-        mimetype="video/mp4",
+        mimetype="audio/mpeg",
+        conditional=True,
+        max_age=0,
     )
