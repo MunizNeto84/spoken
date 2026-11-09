@@ -14,7 +14,6 @@ from flask import (
 from app.services.ai_service import ResilientTutorService
 from app.services.conversation_service import ConversationService
 from app.services.tts_service import generate_segmented_speech
-from app.character.live_animator import LivePortraitAnimator
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ bp = Blueprint("main", __name__)
 # Dependências da aplicação
 tutor_service = ResilientTutorService()
 conversation_service = ConversationService(tutor_service)
-animator = LivePortraitAnimator()
+
 
 # Diretórios de mídia
 BASE_DIR = os.path.abspath(
