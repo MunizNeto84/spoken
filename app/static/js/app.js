@@ -93,9 +93,12 @@ import { ExpressionController } from "./expressions/expression_controller.js";
   }
 
   async function postJson(url, payload) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    const headers = { "Content-Type": "application/json" };
+    if (csrfToken) headers["X-CSRFToken"] = csrfToken;
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
     const data = await response.json().catch(() => ({}));
