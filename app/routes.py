@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from flask import Blueprint, jsonify, render_template, request, send_from_directory
+from flask_login import login_required
 
 from app.services.ai_service import ResilientTutorService
 from app.services.conversation_service import ConversationService
@@ -55,11 +56,13 @@ def _generate_audio(segments: list[dict], mood: str) -> tuple[str, str]:
 
 
 @bp.get("/")
+@login_required
 def index():
     return render_template("index.html")
 
 
 @bp.post("/api/start")
+@login_required
 def start_session():
     data = request.get_json(silent=True) or {}
     target_lang = data.get("target_lang", "en")
@@ -98,6 +101,7 @@ def start_session():
 
 
 @bp.post("/api/chat")
+@login_required
 def chat_turn():
     data = request.get_json(silent=True) or {}
     message = str(data.get("message") or "").strip()
@@ -146,6 +150,7 @@ def chat_turn():
 
 
 @bp.get("/api/audio/<path:filename>")
+@login_required
 def serve_audio(filename: str):
     if Path(filename).name != filename:
         return jsonify({"error": "Nome de arquivo inválido."}), 400

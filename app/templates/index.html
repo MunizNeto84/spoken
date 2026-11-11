@@ -1,70 +1,154 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1218">
-  <title>Spoken — Aula com Suelen</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/teacher.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/components/expressions.css') }}">
-</head>
-<body data-mood="calm" data-expression="neutral">
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="/" aria-label="Spoken início">
-        <span class="brand-mark">S</span>
-        <span><strong>spoken</strong><small>language studio</small></span>
-      </a>
-      <div class="settings">
-        <div class="segmented" id="lang-selector" aria-label="Idioma">
-          <button class="segment active" type="button" data-lang="en" aria-pressed="true">🇺🇸 Inglês</button>
-          <button class="segment" type="button" data-lang="es" aria-pressed="false">🇪🇸 Espanhol</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b1218" />
+    <title>Spoken — Aula com Suelen</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/teacher.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/components/expressions.css') }}"
+    />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <button type="submit">Sair</button>
+    </form>
+  </head>
+  <body data-mood="calm" data-expression="neutral">
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Spoken início">
+          <span class="brand-mark">S</span>
+          <span><strong>spoken</strong><small>language studio</small></span>
+        </a>
+        <div class="settings">
+          <div class="segmented" id="lang-selector" aria-label="Idioma">
+            <button
+              class="segment active"
+              type="button"
+              data-lang="en"
+              aria-pressed="true"
+            >
+              🇺🇸 Inglês
+            </button>
+            <button
+              class="segment"
+              type="button"
+              data-lang="es"
+              aria-pressed="false"
+            >
+              🇪🇸 Espanhol
+            </button>
+          </div>
+          <div class="segmented" id="mood-selector" aria-label="Personalidade">
+            <button
+              class="segment active"
+              type="button"
+              data-mood="calm"
+              aria-pressed="true"
+            >
+              🌿 Calm
+            </button>
+            <button
+              class="segment"
+              type="button"
+              data-mood="spicy"
+              aria-pressed="false"
+            >
+              🔥 Spicy
+            </button>
+          </div>
         </div>
-        <div class="segmented" id="mood-selector" aria-label="Personalidade">
-          <button class="segment active" type="button" data-mood="calm" aria-pressed="true">🌿 Calm</button>
-          <button class="segment" type="button" data-mood="spicy" aria-pressed="false">🔥 Spicy</button>
-        </div>
-      </div>
-    </header>
+      </header>
 
-    <main class="main-layout">
-      <section class="teacher-panel">
-        <div class="teacher-heading"><span class="live-dot"></span><span id="teacher-state">PROFESSORA DISPONÍVEL</span></div>
+      <main class="main-layout">
+        <section class="teacher-panel">
+          <div class="teacher-heading">
+            <span class="live-dot"></span
+            ><span id="teacher-state">PROFESSORA DISPONÍVEL</span>
+          </div>
 
-        {% include "components/teacher.html" %}
+          {% include "components/teacher.html" %}
 
-        <div class="teacher-caption">
-          <strong>Suelen</strong>
-          <span id="teacher-mood-label">Calma, paciente e acolhedora</span>
-        </div>
-        <p class="status-label" id="status-label">Sua professora está pronta para conversar.</p>
-        <button class="start-btn" id="start-btn" type="button">Começar aula <span>→</span></button>
-      </section>
-
-      <section class="conversation-panel">
-        <div class="conversation-heading">
-          <div><span class="eyebrow-label">SUA PRÁTICA</span><h1>Vamos conversar?</h1></div>
-          <span class="session-pill" id="session-state">Sessão não iniciada</span>
-        </div>
-
-        <section class="chat-feed" id="chat-feed" aria-label="Histórico da conversa" aria-live="polite">
-          <div class="welcome-card"><span>✦</span><p>Olá! Eu sou a Suelen. Estou aqui para ajudar você a praticar. Quando estiver pronto, começamos.</p></div>
+          <div class="teacher-caption">
+            <strong>Suelen</strong>
+            <span id="teacher-mood-label">Calma, paciente e acolhedora</span>
+          </div>
+          <p class="status-label" id="status-label">
+            Sua professora está pronta para conversar.
+          </p>
+          <button class="start-btn" id="start-btn" type="button">
+            Começar aula <span>→</span>
+          </button>
         </section>
 
-        <footer class="composer">
-          <button class="mic-btn" id="mic-btn" type="button" aria-label="Falar"><span>🎙</span><span id="mic-text">Falar</span></button>
-          <form id="chat-form" class="text-form">
-            <input id="text-input" type="text" placeholder="Escreva sua frase..." autocomplete="off" aria-label="Sua mensagem">
-            <button id="send-btn" type="submit" aria-label="Enviar">↑</button>
-          </form>
-        </footer>
-        <p class="privacy-note">Pratique no seu ritmo. Errar faz parte do aprendizado.</p>
-      </section>
-    </main>
-  </div>
+        <section class="conversation-panel">
+          <div class="conversation-heading">
+            <div>
+              <span class="eyebrow-label">SUA PRÁTICA</span>
+              <h1>Vamos conversar?</h1>
+            </div>
+            <span class="session-pill" id="session-state"
+              >Sessão não iniciada</span
+            >
+          </div>
 
-  <audio id="teacher-audio" preload="auto"></audio>
-  <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
-</body>
+          <section
+            class="chat-feed"
+            id="chat-feed"
+            aria-label="Histórico da conversa"
+            aria-live="polite"
+          >
+            <div class="welcome-card">
+              <span>✦</span>
+              <p>
+                Olá! Eu sou a Suelen. Estou aqui para ajudar você a praticar.
+                Quando estiver pronto, começamos.
+              </p>
+            </div>
+          </section>
+
+          <footer class="composer">
+            <button
+              class="mic-btn"
+              id="mic-btn"
+              type="button"
+              aria-label="Falar"
+            >
+              <span>🎙</span><span id="mic-text">Falar</span>
+            </button>
+            <form id="chat-form" class="text-form">
+              <input
+                id="text-input"
+                type="text"
+                placeholder="Escreva sua frase..."
+                autocomplete="off"
+                aria-label="Sua mensagem"
+              />
+              <button id="send-btn" type="submit" aria-label="Enviar">↑</button>
+            </form>
+          </footer>
+          <p class="privacy-note">
+            Pratique no seu ritmo. Errar faz parte do aprendizado.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <audio id="teacher-audio" preload="auto"></audio>
+    <script
+      type="module"
+      src="{{ url_for('static', filename='js/app.js') }}"
+    ></script>
+  </body>
 </html>
